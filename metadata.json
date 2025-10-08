@@ -1,0 +1,5 @@
+{
+  "name": "Japanese Anki Flashcards",
+  "description": "An interactive flashcard application to help you memorize Japanese vocabulary, including Kanji, Hiragana, and translations. Customize your study sessions by filtering word types and choosing what to display on each side of the card.",
+  "requestFramePermissions": []
+}
