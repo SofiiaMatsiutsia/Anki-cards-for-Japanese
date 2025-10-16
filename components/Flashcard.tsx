@@ -70,6 +70,13 @@ const Flashcard: React.FC<FlashcardProps> = ({
     setTimeout(() => setIsAnimating(false), 300); // Corresponds to transition duration
   };
 
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter' || e.key === ' ') {
+      e.preventDefault(); // Prevent space from scrolling the page
+      handleFlip();
+    }
+  };
+
   if (!card) {
     return (
       <div className="flex flex-col items-center justify-center bg-slate-800 rounded-lg shadow-lg p-8 h-80 min-h-full">
@@ -128,15 +135,17 @@ const Flashcard: React.FC<FlashcardProps> = ({
         onTouchEnd={handleTouchEnd}
       >
         <div
-          className="relative w-full h-80 rounded-lg shadow-2xl"
+          className="relative w-full h-80 rounded-lg shadow-2xl focus:outline-none focus:ring-4 focus:ring-sky-400 focus:ring-opacity-75"
           style={{
             transformStyle: 'preserve-3d',
             transform: `translateX(${touchDeltaX}px) ${isFlipped ? 'rotateY(180deg)' : 'rotateY(0deg)'}`,
             transition: touchStartX === null ? 'transform 0.3s ease-in-out' : 'none',
           }}
           onClick={handleFlip}
+          onKeyDown={handleKeyDown}
           role="button"
-          aria-label={isFlipped ? 'Card back, click to flip' : 'Card front, click to flip'}
+          aria-roledescription="flippable flashcard"
+          aria-label={isFlipped ? 'Card back, press space or enter to flip' : 'Card front, press space or enter to flip'}
           tabIndex={0}
         >
           <div className="absolute w-full h-full backface-hidden bg-slate-800 border-2 border-slate-700 rounded-lg overflow-hidden">
@@ -153,7 +162,7 @@ const Flashcard: React.FC<FlashcardProps> = ({
         </NavButton>
 
         <div className="flex flex-col items-center">
-            <button onClick={onShuffle} className="text-slate-400 hover:text-sky-400 transition-colors text-sm mb-1" aria-label="Shuffle deck">
+            <button onClick={onShuffle} className="text-slate-400 hover:text-sky-400 transition-colors text-sm mb-1 focus:outline-none focus:underline" aria-label="Shuffle deck">
                 Shuffle Deck
             </button>
             <p className="text-slate-400 font-mono text-lg">{currentIndex + 1} / {deckSize}</p>

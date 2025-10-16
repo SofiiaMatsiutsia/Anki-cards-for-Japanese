@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import { allVocabulary } from './data/vocabulary';
 import Controls from './components/Controls';
 import Flashcard from './components/Flashcard';
@@ -11,6 +11,7 @@ const App: React.FC = () => {
   const [frontContent, setFrontContent] = useState<CardSide[]>([CardSide.Kanji]);
   const [backContent, setBackContent] = useState<CardSide[]>([CardSide.Hiragana, CardSide.English]);
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
+  const drawerTriggerRef = useRef<HTMLButtonElement>(null);
 
   const {
     currentCard,
@@ -91,7 +92,8 @@ const App: React.FC = () => {
           <aside className="w-full lg:w-1/3 xl:w-1/4 lg:order-1">
             {/* Mobile: Button to open drawer */}
             <div className="lg:hidden text-center">
-              <button 
+              <button
+                ref={drawerTriggerRef}
                 onClick={() => setIsDrawerOpen(true)}
                 className="w-full bg-sky-600 text-white font-bold py-3 px-4 rounded-lg hover:bg-sky-700 transition-colors flex items-center justify-center gap-2"
                 aria-haspopup="dialog"
@@ -113,7 +115,7 @@ const App: React.FC = () => {
       </div>
 
       {/* Mobile Drawer */}
-      <Drawer isOpen={isDrawerOpen} onClose={() => setIsDrawerOpen(false)}>
+      <Drawer isOpen={isDrawerOpen} onClose={() => setIsDrawerOpen(false)} triggerRef={drawerTriggerRef}>
         {controlsComponent}
       </Drawer>
     </div>

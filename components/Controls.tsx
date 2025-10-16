@@ -37,20 +37,20 @@ const MultiSideSelector: React.FC<{
   return (
     <div>
       <label className="block text-sm font-medium text-slate-300 mb-2">{label}</label>
-      <div className="space-y-2">
+      <div className="space-y-1">
         {options.map(option => (
-          <div key={option} className="flex items-center">
+          <div key={option} className="flex items-center justify-between py-1.5 lg:py-2">
+            <label htmlFor={`${label}-${option}`} className="block text-base lg:text-lg text-slate-300">
+              {option}
+            </label>
             <input
               type="checkbox"
               id={`${label}-${option}`}
               value={option}
               checked={selectedOptions.includes(option)}
               onChange={(e) => handleCheckboxChange(option, e.target.checked)}
-              className="h-4 w-4 rounded border-gray-500 bg-slate-700 text-sky-500 focus:ring-sky-500"
+              className="h-5 w-5 lg:h-6 lg:w-6 rounded border-gray-500 bg-slate-700 text-sky-500 focus:ring-sky-500 shrink-0"
             />
-            <label htmlFor={`${label}-${option}`} className="ml-2 block text-sm text-slate-300">
-              {option}
-            </label>
           </div>
         ))}
       </div>
@@ -75,32 +75,32 @@ const Controls: React.FC<ControlsProps> = ({
     <div className="bg-slate-800 p-4 rounded-lg shadow-lg space-y-6">
       <div>
         <h3 className="text-lg font-semibold text-sky-400 mb-3 border-b border-slate-700 pb-2">Word Types</h3>
-        <div className="space-y-2">
-           <div className="flex items-center">
+        <div className="space-y-1">
+           <div className="flex items-center justify-between py-1.5 lg:py-2">
+            <label htmlFor="select-all" className="block text-base lg:text-lg font-bold text-slate-200">
+              All Types
+            </label>
             <input
               type="checkbox"
               id="select-all"
               checked={isAllSelected}
               onChange={(e) => onSelectAll(e.target.checked)}
-              className="h-4 w-4 rounded border-gray-500 bg-slate-700 text-sky-500 focus:ring-sky-500"
+              className="h-5 w-5 lg:h-6 lg:w-6 rounded border-gray-500 bg-slate-700 text-sky-500 focus:ring-sky-500 shrink-0"
             />
-            <label htmlFor="select-all" className="ml-2 block text-sm font-bold text-slate-200">
-              All Types
-            </label>
           </div>
           {wordTypes.map(type => (
-            <div key={type} className="flex items-center pl-2">
+            <div key={type} className="flex items-center justify-between py-1.5 lg:py-2 pl-2">
+              <label htmlFor={type} className="block text-base lg:text-lg text-slate-300">
+                {type}
+              </label>
               <input
                 type="checkbox"
                 id={type}
                 value={type}
                 checked={selectedTypes.includes(type)}
                 onChange={(e) => onTypeChange(type, e.target.checked)}
-                className="h-4 w-4 rounded border-gray-500 bg-slate-700 text-sky-500 focus:ring-sky-500"
+                className="h-5 w-5 lg:h-6 lg:w-6 rounded border-gray-500 bg-slate-700 text-sky-500 focus:ring-sky-500 shrink-0"
               />
-              <label htmlFor={type} className="ml-2 block text-sm text-slate-300">
-                {type}
-              </label>
             </div>
           ))}
         </div>
