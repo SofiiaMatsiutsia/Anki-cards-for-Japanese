@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { allVocabulary } from './data/vocabulary';
 import Controls from './components/Controls';
@@ -9,8 +8,8 @@ import { useFlashcards } from './hooks/useFlashcards';
 
 const App: React.FC = () => {
   const [selectedTypes, setSelectedTypes] = useState<WordType[]>([WordType.Adjective, WordType.Adverb, WordType.Noun, WordType.Verb]);
-  const [frontContent, setFrontContent] = useState<CardSide>(CardSide.Kanji);
-  const [backContent, setBackContent] = useState<CardSide>(CardSide.HiraganaAndEnglish);
+  const [frontContent, setFrontContent] = useState<CardSide[]>([CardSide.Kanji]);
+  const [backContent, setBackContent] = useState<CardSide[]>([CardSide.Hiragana, CardSide.English]);
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
 
   const {
@@ -49,7 +48,7 @@ const App: React.FC = () => {
   }, [selectedTypes, setDeck]);
   
   const wordTypes = useMemo(() => [WordType.Adjective, WordType.Adverb, WordType.Noun, WordType.Verb], []);
-  const cardSides = useMemo(() => [CardSide.Kanji, CardSide.Hiragana, CardSide.English, CardSide.HiraganaAndEnglish], []);
+  const cardSides = useMemo(() => [CardSide.Kanji, CardSide.Hiragana, CardSide.English], []);
 
   const controlsComponent = (
       <Controls

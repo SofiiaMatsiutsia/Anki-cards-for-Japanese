@@ -1,4 +1,3 @@
-
 export enum WordType {
   Noun = 'Noun',
   Verb = 'Verb',
@@ -10,7 +9,6 @@ export enum CardSide {
     Kanji = 'Kanji',
     Hiragana = 'Hiragana',
     English = 'English',
-    HiraganaAndEnglish = 'Hiragana & English'
 }
 
 export interface VocabularyItem {
