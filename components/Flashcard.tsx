@@ -15,7 +15,6 @@ interface FlashcardProps {
 
 const CardContent: React.FC<{ sides: CardSide[], card: VocabularyItem, isBackSide: boolean }> = ({ sides, card, isBackSide }) => {
   const sortedSides = useMemo(() => {
-    // Define a canonical order to prevent content jumping if user re-orders selection
     const order = [CardSideEnum.Hiragana, CardSideEnum.Kanji, CardSideEnum.English];
     return sides.slice().sort((a, b) => order.indexOf(a) - order.indexOf(b));
   }, [sides]);
@@ -52,28 +51,37 @@ const Flashcard: React.FC<FlashcardProps> = ({
   onShuffle,
 }) => {
   const [isFlipped, setIsFlipped] = useState(false);
-  const [isAnimating, setIsAnimating] = useState(false);
-  
+  const [isFlipAnimating, setIsFlipAnimating] = useState(false);
+  const [isExiting, setIsExiting] = useState<'left' | 'right' | null>(null);
+
   // State for swipe gestures
   const [touchStartX, setTouchStartX] = useState<number | null>(null);
-  const [touchDeltaX, setTouchDeltaX] = useState<number>(0);
+  const [touchStartY, setTouchStartY] = useState<number | null>(null);
+  const [touchDelta, setTouchDelta] = useState({ x: 0, y: 0 });
 
   useEffect(() => {
     setIsFlipped(false);
-    setTouchDeltaX(0); // Reset position for new card
+    setIsExiting(null);
+    setTouchDelta({ x: 0, y: 0 });
   }, [currentIndex, card]);
 
-  const handleFlip = () => {
-    if (isAnimating || touchDeltaX !== 0) return; // Don't flip while swiping
-    setIsAnimating(true);
-    setIsFlipped(!isFlipped);
-    setTimeout(() => setIsAnimating(false), 300); // Corresponds to transition duration
+  const handleCardClick = () => {
+    // Prevent click/flip if animating, exiting, or if a drag has started
+    if (isFlipAnimating || isExiting || Math.abs(touchDelta.x) > 10) return;
+
+    if (isFlipped) {
+      onNext();
+    } else {
+      setIsFlipAnimating(true);
+      setIsFlipped(true);
+      setTimeout(() => setIsFlipAnimating(false), 300); // Corresponds to transition duration
+    }
   };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter' || e.key === ' ') {
-      e.preventDefault(); // Prevent space from scrolling the page
-      handleFlip();
+      e.preventDefault();
+      handleCardClick();
     }
   };
 
@@ -85,35 +93,71 @@ const Flashcard: React.FC<FlashcardProps> = ({
       </div>
     );
   }
-  
-  const SWIPE_THRESHOLD = 75; // Minimum pixels for a swipe
+
+  const SWIPE_THRESHOLD = 75;
 
   const handleTouchStart = (e: React.TouchEvent) => {
-    if (isAnimating) return;
+    if (isFlipAnimating || isExiting) return;
     setTouchStartX(e.touches[0].clientX);
+    setTouchStartY(e.touches[0].clientY);
   };
 
   const handleTouchMove = (e: React.TouchEvent) => {
-    if (touchStartX === null || isAnimating) return;
-    const delta = e.touches[0].clientX - touchStartX;
-    setTouchDeltaX(delta);
+    if (touchStartX === null || touchStartY === null || isFlipAnimating || isExiting) return;
+
+    const deltaX = e.touches[0].clientX - touchStartX;
+    const deltaY = e.touches[0].clientY - touchStartY;
+
+    // If horizontal movement is dominant, prevent vertical page scroll
+    if (Math.abs(deltaX) > Math.abs(deltaY)) {
+      e.preventDefault();
+    }
+
+    setTouchDelta({ x: deltaX, y: deltaY });
   };
 
   const handleTouchEnd = () => {
-    if (touchStartX === null || isAnimating) return;
+    if (touchStartX === null || isFlipAnimating || isExiting) return;
 
-    if (Math.abs(touchDeltaX) > SWIPE_THRESHOLD) {
-      // Swipe detected. Swipe right (positive delta) is prev, swipe left (negative delta) is next.
-      if (touchDeltaX < 0) {
-        onNext();
-      } else {
-        onPrev();
-      }
+    if (Math.abs(touchDelta.x) > SWIPE_THRESHOLD) {
+      const direction = touchDelta.x < 0 ? 'left' : 'right';
+      setIsExiting(direction);
+
+      setTimeout(() => {
+        if (direction === 'left') {
+          onNext();
+        } else {
+          onPrev();
+        }
+      }, 300); // Wait for exit animation
     } else {
       // Not a valid swipe, snap back
-      setTouchDeltaX(0);
+      setTouchDelta({ x: 0, y: 0 });
     }
+    
     setTouchStartX(null);
+    setTouchStartY(null);
+  };
+
+  const getSwipeTransform = () => {
+    if (isExiting) {
+      const exitX = isExiting === 'left' ? '-150%' : '150%';
+      const exitRotate = isExiting === 'left' ? -30 : 30;
+      return `translateX(${exitX}) rotate(${exitRotate}deg)`;
+    }
+    if (touchStartX !== null) {
+      const rotate = touchDelta.x / 20; // Rotation factor
+      return `translateX(${touchDelta.x}px) rotate(${rotate}deg)`;
+    }
+    return 'translateX(0px) rotate(0deg)';
+  };
+
+  const getSwipeTransition = () => {
+    if (touchStartX !== null) {
+      return 'none'; // No transition while dragging
+    }
+    // Springy transition for snap-back and exit
+    return 'transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275)';
   };
 
   const NavButton: React.FC<{onClick: () => void, children: React.ReactNode, ariaLabel: string}> = ({onClick, children, ariaLabel}) => (
@@ -133,19 +177,23 @@ const Flashcard: React.FC<FlashcardProps> = ({
         onTouchStart={handleTouchStart}
         onTouchMove={handleTouchMove}
         onTouchEnd={handleTouchEnd}
+        style={{
+          transform: getSwipeTransform(),
+          transition: getSwipeTransition(),
+        }}
       >
         <div
           className="relative w-full h-80 rounded-lg shadow-2xl focus:outline-none focus:ring-4 focus:ring-sky-400 focus:ring-opacity-75"
           style={{
             transformStyle: 'preserve-3d',
-            transform: `translateX(${touchDeltaX}px) ${isFlipped ? 'rotateY(180deg)' : 'rotateY(0deg)'}`,
-            transition: touchStartX === null ? 'transform 0.3s ease-in-out' : 'none',
+            transform: isFlipped ? 'rotateY(180deg)' : 'rotateY(0deg)',
+            transition: 'transform 0.4s ease-in-out',
           }}
-          onClick={handleFlip}
+          onClick={handleCardClick}
           onKeyDown={handleKeyDown}
           role="button"
           aria-roledescription="flippable flashcard"
-          aria-label={isFlipped ? 'Card back, press space or enter to flip' : 'Card front, press space or enter to flip'}
+          aria-label={isFlipped ? 'Card back, press space or enter to go to next card' : 'Card front, press space or enter to flip'}
           tabIndex={0}
         >
           <div className="absolute w-full h-full backface-hidden bg-slate-800 border-2 border-slate-700 rounded-lg overflow-hidden">
@@ -174,7 +222,7 @@ const Flashcard: React.FC<FlashcardProps> = ({
       </div>
       <style>{`
         .perspective-\\[1000px\\] { perspective: 1000px; }
-        .transform-style-preserve-3d { transform-style: preserve-3d; }
+        .transform-style-preserve-3d { transform-style: preserve-d; }
         .transform-rotate-y-180 { transform: rotateY(180deg); }
         .backface-hidden { backface-visibility: hidden; -webkit-backface-visibility: hidden; }
       `}</style>
